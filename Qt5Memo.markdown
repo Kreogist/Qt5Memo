@@ -101,3 +101,21 @@
 ###Qt5的多平台支持###
 
 Qt5使用QPA（Qt Platform Abstraction，Qt平台抽象）将各个不同的平台的具体处理抽象化，以提供平台独立性，且可以通过插件的方式进行扩展。Qt原本在很多类的实现中都针对不同平台分别进行了特殊处理，提高了支持更多平台的难度。QPA把这些都抽象了出来，并以插件的形式实现对各平台的支持。只要实现一个新的插件就可以支持新的平台。这使得支持新的平台变成了一件轻而易举的事。Qt5支持如下平台
+=======
+Qt5使用QPA（Qt Platform Abstraction，Qt平台抽象）将各个不同的平台的具体处理抽象化，以提供平台独立性，且可以通过插件的方式进行扩展。Qt原本在很多类的实现中都针对不同平台分别进行了特殊处理，提高了支持更多平台的难度。QPA把这些都抽象了出来，并以插件的形式实现对各平台的支持。只要实现一个新的插件就可以支持新的平台。这使得支持新的平台变成了一件轻而易举的事。
+
+Qt5支持的桌面平台有Windows、Linux/X11和Mac OS X，嵌入式系统支持嵌入式Linux(DirectFB, EGLFS, KMS, and Wayland)、嵌入式Windows(精简版和标准版)以及实时操作系统，例如：QNX, VxWorks和INTEGRITY。
+Qt5在以后的版本中将会提供对主流移动操作系统的支持（包括Android、iOS、Windows 8 (WinRT)、BlackBerry 10），这些支持正在开发中，将在未来的版本中提供。
+
+Qt项目对如下配置进行过测试：
+
++   Ubuntu Linux 11.10, X11 (64-bit)	Ubuntu提供的编译器版本
++   Ubuntu Linux 12.04, X11 (64-bit)	Ubuntu提供的编译器版本
++   Microsoft Windows 7 (32-bit)	MSVC 2010 SP1
++   Microsoft Windows 7 (32-bit)	MinGW-builds gcc 4.7.2 (32-bit)
++   Microsoft Windows 8 (64-bit)	MSVC 2012
++   Apple Mac OS X 10.7 "Lion", Cocoa (64-bit)	苹果提供的Clang版本
++   Apple Mac OS X 10.8 "Mountain Lion", Cocoa (64-bit)	苹果提供的Clang版本
+
+###Qt提供的安装包###
+Qt项目为所有上述平台提供二进制安装包。如果想在其他Qt支持的平台上开发，你需要自己从源代码编译。如果想知道更多关于Qt在不同平台和编译器上的信息，请看[平台和信息注意事项页面](http://qt-project.org/doc/qt-5.0/qtdoc/platform-notes.html)
