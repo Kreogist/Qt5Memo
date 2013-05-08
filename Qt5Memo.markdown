@@ -22,103 +22,126 @@
 
 +   Qt Core
 
-　　核心的被其他模块依赖的的图形无关的类；
+    核心的被其他模块依赖的的图形无关的类；
+
 +   Qt GUI
 
-　　GUI组件的基础类，包括OpenGL；
+    GUI组件的基础类，包括OpenGL；
+
 +   Qt Multimedia
 
-　　提供音频、视频、广播和相机功能的方式；
+    提供音频、视频、广播和相机功能的方式；
+
 +   Qt Network
 
-　　用于进行更简单且可移动的网络开发的方式；
+    用于进行更简单且可移动的网络开发的方式；
+
 +   Qt QML
 
-　　提供QML和Javascript语言的支持；
+    提供QML和Javascript语言的支持；
+
 +   Qt Quick
 
-　　一个用于构建含自定义用户界面的高动态应用程序的声明式框架；
+    一个用于构建含自定义用户界面的高动态应用程序的声明式框架；
+
 +   Qt SQL
 
-　　提供SQL数据库整合的类；
+    提供SQL数据库整合的类；
+
 +   Qt Test
 
-　　用于对Qt程序和库进行单元测试的类；
+    用于对Qt程序和库进行单元测试的类；
+
 +   Qt WebKit
 
-　　提供对WebKit2和新的QML API的支持；
+    提供对WebKit2和新的QML API的支持；
+
 +   Qt WebKit Widgets
 
-　　WebKit1和源自Qt4的基于QWidget的类；
+    WebKit1和源自Qt4的基于QWidget的类；
+
 +   Qt Widgets
 
-　　C++的widgets类。
+    C++的widgets类。
 
 *附加模块*
 
 +   Active Qt(Windows)
 
-　　提供对ActiveX和COM的支持的类；
+    提供对ActiveX和COM的支持的类；
+
 +   Qt Concurrent(Windows)
 
-　　提供用于编写多线程程序的高层API的支持；
+    提供用于编写多线程程序的高层API的支持；
+
 +   Qt D-Bus(Unix)
 
-　　提供使用D-Bus协议进行进程内通讯的支持的类；
+    提供使用D-Bus协议进行进程内通讯的支持的类；
+
 +   Qt图形特效
 
-　　Qt Quick2图形特效支持；
+    Qt Quick2图形特效支持；
+
 +   Qt Image Formats
 
-　　提供额外的图形格式支持：包括 TIFF，MNG，TGA和WBMP。
+    提供额外的图形格式支持：包括 TIFF，MNG，TGA和WBMP。
+
 +   Qt OpenGL
 
-　　OpenGL类支持；
+    OpenGL类支持；
 
-　　注意：此模块仅提供于Qt 4.x版本的移植。请在新的代码中使用QtGui类来代替QOpenGL。
+    注意：此模块仅提供于Qt 4.x版本的移植。请在新的代码中使用QtGui类来代替QOpenGL。
+
 +   Qt Print Support
 
-　　提供更加简易和可移动的打印方式。
+    提供更加简易和可移动的打印方式。
+
 +   Qt Declarative
 
-　　Qt Declarative 是一个提供 Qt 4 兼容的类。提供到Qt 4.8 Qt Quick documentation的文档支持；
+    Qt Declarative 是一个提供 Qt 4 兼容的类。提供到Qt 4.8 Qt Quick documentation的文档支持；
+
 +   Qt Script
 
-　　让QT应用支持脚本化，此功能用于Qt 4.x的兼容支持。请在新的代码中使用 QtQml 模块中的 QJS* 类来替代Qt Script。
+    让QT应用支持脚本化，此功能用于Qt 4.x的兼容支持。请在新的代码中使用 QtQml 模块中的 QJS* 类来替代Qt Script。
+
 +   Qt Script Tools
 
-　　为使用Qt Script的应用提供额外功能的支持。
+    为使用Qt Script的应用提供额外功能的支持。
+
 +   Qt SVG
 
-　　提供用于显示SVG文件的功能类；
+    提供用于显示SVG文件的功能类；
+
 +   Qt XML
 
-　　提供C++对SAX和DOM的支持；
+    提供C++对SAX和DOM的支持；
 
-　　注意：不建议使用此类, 请使用 QXmlStreamReader 和 QXmlStreamWriter 来启用新的功能；
+    注意：不建议使用此类, 请使用 QXmlStreamReader 和 QXmlStreamWriter 来启用新的功能；
 
 +   Qt XML Patterns
 
-　　提供对 XPath，XQuery，XSLT 和 XML schema 语言的支持。
-　　
+    提供对 XPath，XQuery，XSLT 和 XML schema 语言的支持。
+
 　　这些功能涵盖了开发应用程序时的所需的绝大部分功能。这就意味着，我们可以专注于开发我们项目中的特色部分，而不必为很多常规的细枝末节的功能而耗费宝贵的时间和精力，更不必每次都重造那些别人已经造过无数遍的轮子。同时，你也不必担心Qt的稳定性、易用性等等。Qt有大量的成功案例，例如著名的桌面环境KDE（K Desktop Environment）,VirtualBox虚拟机软件，国产办公软件的金山WPS等等，它绝不会让你失望。
-　　
+
 　　如果上述文字仍无法打动你的话，我们再来随便看几个Qt提供的类，看看能否给你点震撼呢？
+　　
 +   QRegularExpression
 
-　　这个类提供了对Perl兼容的正则表达式的支持，且完全支持Unicode。
+    这个类提供了对Perl兼容的正则表达式的支持，且完全支持Unicode。
+
 +   QJsonArray、QJsonDocument、QJsonObject、QJsonParseError、QJsonValue
 
-　　这些类提供了对解析和生成JSON的支持（JSON(JavaScript Object Notation) 是一种轻量级的数据交换格式，广泛用于网络中）。
-　　
+    这些类提供了对解析和生成JSON的支持（JSON(JavaScript Object Notation) 是一种轻量级的数据交换格式，广泛用于网络中）。
+
 +   QSystemTrayIcon
-　　
-　　这个类提供对系统托盘(System Tray)的支持，可以在托盘上显示图标，显示消息，支持托盘菜单等等。且这是跨平台的。支持所有Qt支持的windows版本、所有符合freedesktop.org关于系统托盘的规定的X11窗口管理器（包括最近的GNOME和KDE版本），以及所有Qt支持的Mac OS X版本。
-　　
+
+    这个类提供对系统托盘(System Tray)的支持，可以在托盘上显示图标，显示消息，支持托盘菜单等等。且这是跨平台的。支持所有Qt支持的windows版本、所有符合freedesktop.org关于系统托盘的规定的X11窗口管理器（包括最近的GNOME和KDE版本），以及所有Qt支持的Mac OS X版本。
+
 +   QCompleter
-　　
-　　QCompleter类为任意Qt Widget提供自动补齐功能，例如QLineEdit和QComboBox。
-　　
+
+    QCompleter类为任意Qt Widget提供自动补齐功能，例如QLineEdit和QComboBox。
+
 　　当然这些仅仅是Qt提供的大量功能中的少数几个，你是否动心了呢？动心了就请继续阅读本文，踏上Qt的学习和使用之旅吧。
 
 ###关于Qt5的多平台支持###
@@ -151,26 +174,29 @@ Qt项目为所有上述平台提供二进制安装包。如果想在其他Qt支�
 
 +    Qt Designer
 
-　　拓展Qt Designer功能的类；
+    拓展Qt Designer功能的类；
 +    Qt Help
 
-　　在线帮助的类；
+    在线帮助的类；
 +    Qt UI Tools
 
-　　UI工具的类；
+    UI工具的类；
 
 ###Qt许可协议###
 看了这么多，你或许会问：这么强大的开发工具，得要多少钱啊？看看自己的钱包，不免有些紧张。其实不必那么紧张，Qt可以使用三种不同的协议以适应不同的用户需求：
 
 +   Qt商业许可协议（付费）
-　　如果你准备开发一个专有或商业软件且不希望向第三方开放任何源代码，或者你无法遵守GNU LGPL version 2.1 or GNU GPL version 3.0协议，你可以选择这个协议
+
+    如果你准备开发一个专有或商业软件且不希望向第三方开放任何源代码，或者你无法遵守GNU LGPL version 2.1 or GNU GPL version 3.0协议，你可以选择这个协议
 
 +   GNU LGPL version 2.1（免费）
+
     这个协议很著名，大家应该都很了解了。只要你采用动态链接的形式使用Qt，你就可以随意发布你的应用程序。
 
 +   GNU GPL version 3.0 （免费）
+
     GPL开源协议大家更了解，不必多说了。如果你想使用GPLv3发布你的程序，或者代码中需要使用其他的一些使用GPLv3协议授权的代码，那么你可以使用GPLv3版本的Qt。
     
-    这三个协议的Qt库的源代码是完全一致的，也就是说功能上没有任何差异。只是收费版本提供很多支持、售后服务而已。如果想更多地了解LGPL的内容，可以参考FinderCheng的[这篇博客](http://devbean.blog.51cto.com/448512/313477)
+这三个协议的Qt库的源代码是完全一致的，也就是说功能上没有任何差异。只是收费版本提供很多支持、售后服务而已。如果想更多地了解LGPL的内容，可以参考FinderCheng的[这篇博客](http://devbean.blog.51cto.com/448512/313477)
     
 
