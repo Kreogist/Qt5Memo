@@ -224,7 +224,9 @@ Qt项目为所有上述平台提供二进制安装包。如果想在其他Qt支�
 +  选择发行版打包好的Qt
 
 	Ubuntu发行版的软件仓库中有一个打包好的Qt。你可以直接打开Ubuntu软件中心，然后搜索Qt Creator，点击安装。也可以使用命令行：
+        
         sudo apt-get install qtcreator qt5-default
+	
 	安装Qt Creator及开发Qt5必要的环境
 	
 +  从官方网站下载最新的二进制包
