@@ -1,8 +1,8 @@
-## Qt学习备忘录1：Qt介绍 ##
+﻿## Qt学习备忘录1：Qt介绍 ##
 　　随着时代的发展，你或许越来越多地发现，很多软件的身影都不只出现在装有Windows XP/Vista/7的机器上。它们开始出现在Mac上面，出现在Linux上面，甚至出现在朋友的手机里。软件的跨平台已成为时代的大趋势。你有没有过让你的程序也同时部署在多个平台上的愿望呢？如果有，Qt可以帮你轻松实现它。
 
 ### 什么是Qt? ###
-　　Qt是一个功能强大的跨平台应用程序开发框架，且包含了很多用于开发应用程序的工具，以便于开发桌面、嵌入式及移动应用程序。
+　　Qt是一个基于C++或QML的功能强大的跨平台应用程序开发工具和UI设计框架，且包含了很多用于开发应用程序的工具，以便于开发桌面、嵌入式及移动应用程序。
 
 　　Qt包含了Qt Freamwork和Qt Creator IDE。Qt Framework提供了C++和CSS/Javascript的API，这些API基本都是跨平台的，你可以在不改变代码的情况下在多平台编译。你可以轻松地创建跨平台应用程序。Qt Creator IDE是一个功能强大的集成开发环境，集成了界面设计器、多种版本控制工具插件等工具，支持代码高亮、自动补齐等等的功能，使开发Qt应用程序变成一种享受。
 
@@ -15,107 +15,59 @@
 
 *基本模块*
 
-+  Qt Core
++  Qt Core			核心的被其他模块依赖的的图形无关的类；
 
-    核心的被其他模块依赖的的图形无关的类；
++  Qt GUI			GUI组件的基础类，包括OpenGL；
 
-+  Qt GUI
++  Qt Multimedia		提供音频、视频、广播和相机功能的方式；
 
-    GUI组件的基础类，包括OpenGL；
++  Qt Network			用于进行更简单且可移动的网络开发的方式；
 
-+  Qt Multimedia
++  Qt QML			提供QML和Javascript语言的支持；
 
-    提供音频、视频、广播和相机功能的方式；
++  Qt Quick			一个用于构建含自定义用户界面的高动态应用程序的声明式框架；
 
-+  Qt Network
++  Qt SQL			提供SQL数据库整合的类；
 
-    用于进行更简单且可移动的网络开发的方式；
++  Qt Test			用于对Qt程序和库进行单元测试的类；
 
-+  Qt QML
++  Qt WebKit			提供对WebKit2和新的QML API的支持；
 
-    提供QML和Javascript语言的支持；
++  Qt WebKit Widgets		WebKit1和源自Qt4的基于QWidget的类；
 
-+  Qt Quick
-
-    一个用于构建含自定义用户界面的高动态应用程序的声明式框架；
-
-+  Qt SQL
-
-    提供SQL数据库整合的类；
-
-+  Qt Test
-
-    用于对Qt程序和库进行单元测试的类；
-
-+  Qt WebKit
-
-    提供对WebKit2和新的QML API的支持；
-
-+  Qt WebKit Widgets
-
-    WebKit1和源自Qt4的基于QWidget的类；
-
-+  Qt Widgets
-
-    C++的widgets类。
++  Qt Widgets			C++的widgets类。
 
 *附加模块*
 
-+  Active Qt(Windows)
++  Active Qt(Windows)		提供对ActiveX和COM的支持的类；
 
-    提供对ActiveX和COM的支持的类；
++  Qt Concurrent(Windows)	提供用于编写多线程程序的高层API的支持；
 
-+  Qt Concurrent(Windows)
++  Qt D-Bus(Unix)		提供使用D-Bus协议进行进程内通讯的支持的类；
 
-    提供用于编写多线程程序的高层API的支持；
++  Qt图形特效			Qt Quick2图形特效支持；
 
-+  Qt D-Bus(Unix)
++  Qt Image Formats		提供额外的图形格式支持：包括 TIFF，MNG，TGA和WBMP。
 
-    提供使用D-Bus协议进行进程内通讯的支持的类；
++  Qt OpenGL			OpenGL类支持；
 
-+  Qt图形特效
+				注意：此模块仅提供于Qt 4.x版本的移植。请在新的代码中使用QtGui类来代替QOpenGL。
 
-    Qt Quick2图形特效支持；
++  Qt Print Support		提供更加简易和可移动的打印方式。
 
-+  Qt Image Formats
++  Qt Declarative		Qt Declarative 是一个提供 Qt 4 兼容的类。提供到Qt 4.8 Qt Quick documentation的文档支持；
 
-    提供额外的图形格式支持：包括 TIFF，MNG，TGA和WBMP。
++  Qt Script			让QT应用支持脚本化，此功能用于Qt 4.x的兼容支持。请在新的代码中使用 QtQml 模块中的 QJS* 类来替代Qt Script。
 
-+  Qt OpenGL
++  Qt Script Tools		为使用Qt Script的应用提供额外功能的支持。
 
-    OpenGL类支持；
++  Qt SVG			提供用于显示SVG文件的功能类；
 
-    注意：此模块仅提供于Qt 4.x版本的移植。请在新的代码中使用QtGui类来代替QOpenGL。
++  Qt XML			提供C++对SAX和DOM的支持；
 
-+  Qt Print Support
+				注意：不建议使用此类, 请使用 QXmlStreamReader 和 QXmlStreamWriter 来启用新的功能；
 
-    提供更加简易和可移动的打印方式。
-
-+  Qt Declarative
-
-    Qt Declarative 是一个提供 Qt 4 兼容的类。提供到Qt 4.8 Qt Quick documentation的文档支持；
-
-+  Qt Script
-
-    让QT应用支持脚本化，此功能用于Qt 4.x的兼容支持。请在新的代码中使用 QtQml 模块中的 QJS* 类来替代Qt Script。
-
-+  Qt Script Tools
-
-    为使用Qt Script的应用提供额外功能的支持。
-
-+  Qt SVG
-
-    提供用于显示SVG文件的功能类；
-
-+  Qt XML
-
-    提供C++对SAX和DOM的支持；
-
-    注意：不建议使用此类, 请使用 QXmlStreamReader 和 QXmlStreamWriter 来启用新的功能；
-
-+  Qt XML Patterns
-
-    提供对 XPath，XQuery，XSLT 和 XML schema 语言的支持。
++  Qt XML Patterns		提供对 XPath，XQuery，XSLT 和 XML schema 语言的支持。
 
 　　这些功能涵盖了开发应用程序时的所需的绝大部分功能。这就意味着，我们可以专注于开发我们项目中的特色部分，而不必为很多常规的细枝末节的功能而耗费宝贵的时间和精力，更不必每次都重造那些别人已经造过无数遍的轮子。同时，你也不必担心Qt的稳定性、易用性等等。Qt有大量的成功案例，例如著名的桌面环境KDE（K Desktop Environment）,VirtualBox虚拟机软件，国产办公软件的金山WPS等等，它绝不会让你失望。
 
