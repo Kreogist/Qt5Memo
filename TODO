@@ -5,4 +5,4 @@ README.md
 ch2:初试Qt（待完成）
 1.windows上安装Qt的过程（二进制安装及编译安装）。
 2.Ubuntu上编译安装Qt的过程。
-3.hello world程序及讲解等等。
+3.QCoreApplication翻译。
