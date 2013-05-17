@@ -73,8 +73,12 @@ FIXME：没实际经验，暂不写。
 
 　　通过刚刚的目测，我们已经大致猜测了整段程序的含义，接下来，我们来细细地查阅Qt5的文档，来验证一下我们的想法。
 
-#### QApplication类 ####
-　　QApplication类管理着GUI程序的控制流和主要设置。QApplication继承了QGuiApplication类，并实现了一些基于QWidget的应用程序需要的功能。它负责处理关于widget的一些特定的初始化和终止化操作。注意！无论你的程序有几个窗口，你只能有**一个**QAppliaction对象。对于那些不基于QWidget的Qt程序，你应当使用QGuiApplication代替QApplication，因为它不必依赖于QtWidgets库。
+#### 查阅梳理Qt文档 ####
+
+##### QApplication类 #####
+　　QApplication继承了QGuiApplication类，而QGuiApplication继承了QCoreApplication类，这是Qt程序的核心。
+
+　　QApplication类管理着GUI程序的控制流和主要设置。QApplication继承了QGuiApplication类，并实现了一些基于QWidget的应用程序需要的功能。它负责处理关于widget的一些特定的初始化和终止化操作。注意！无论你的程序有几个窗口，你只能有 **一个** QAppliaction对象。对于那些不基于QWidget的Qt程序，你应当使用QGuiApplication代替QApplication，因为它不必依赖于QtWidgets库。
 
 　　一些GUI程序会提供批处理模式（从命令行输入一些参数，然后自动执行任务而不需要人工操作）。在这类非GUI的模式下，初始化一些和图形用户界面相关的资源就显得有些浪费了。为了避免这个问题，Qt提供了QCoreApplication。下面这个例子（源自Qt5Doc）展示了如何动态选择创建QCoreApplication还是QApplication。
 
@@ -154,3 +158,101 @@ FIXME：没实际经验，暂不写。
 
 *关于qApp宏*：qApp是一个全局指针，指向唯一的应用程序中的对象。它等于`QCoreApplication::instance()`函数返回的指针。在GUI程序里，它指向一个QApplication实例。只有一个应用程序对象可以被创建。
 
+##### QCoreApplication #####
+　　按照官方文档的说法，QCoreApplication为非GUI的Qt应用程序提供事件循环。GUI程序需要使用QApplication。但由于QCoreApplication是QApplication的基类，且它们都提供事件循环功能，所以，我们可以猜测大部分的事件循环都是在QCoreApplication中实现的。
+
+　　QCoreApplication包含了主事件循环。源自操作系统的事件(例如：定时器和网络事件等等)和其他的一些资源的处理和分派都是在这里实现的。它同时处理应用程序的初始化和终止化，以及系统层面和程序层面上的设置。
+
++  关于事件循环
+
+	如果你没有写过GUI程序，你可能会困惑事件循环是个什么东西，为什么我们要如此关注它。甚至不惜笔墨和精力，来大段地翻译QCoreApplication的类以搞清Qt中和事件循环相关的一些内容。
+	
+	事件循环是程序，特别是GUI程序在现代操作系统上运行所不可或缺的一部分。如你所见，现代操作系统都是多任务的。多个程序在同时运行。以windows为例，你在操作电脑的时候很可能会同时打开多个GUI程序。它们都有图形界面，且有些部分甚至相互重叠、相互覆盖。那么它们怎么知道用户是在向它输入消息，还是在向它附近的某个窗口输入呢？这个工作就由操作系统来完成。操作系统进行一系列的判断，确定用户到底向哪个程序输入，然后通知对应的程序。
+	
+	那么windows怎样通知具体的应用程序呢？首先，windows为每一个应用程序维护一个队列，每发生一个事件（例如用户按了哪个键，点了程序窗口的哪个位置，窗口尺寸改变了等等），windows就会把这个消息插入到对应程序的队列中。例如你点击了Firefox窗口中的某个按钮，windows就会向Firefox的队列中插入一个消息，通知它用户点击了它的某个位置。由于只向Firefox队列中插入消息，所以旁边的记事本就不必为Firefox所关心的事件头疼，更不会莫名其妙地响应用户对Firefox的操作了。这个队列就叫消息队列。
+	
+	那么，作为应用程序，如果想要知道用户输入了什么，只需要不断读取自己的消息队列就可以了。读取，处理，读取，处理，遵循这样的步骤，应用程序就可以和用户不断交互，直到接到要求它关闭的消息。这个不断读取消息，处理事件，然后再读取，再处理的循环就叫事件循环。
+	
+	程序的事件循环的伪代码如下：
+	
+        int main()
+		{
+			while(getEvent() && event!=QUIT) //不断获取事件列表中的事件，直到收到用户要求退出的消息。
+			{
+				switch(event)
+				{
+					case MOUSE_EVENT:
+						//处理鼠标输入
+					    break;
+					
+					case KEYBOARD_EVENT:
+						//处理键盘输入
+						break;
+					
+					case PAINT_EVENT:
+						//需要重绘（比如之前被别的窗口覆盖了一部分，这部分的内容需要重新绘制）
+						//绘制Hello World什么的，是吧:)
+						break;
+					
+					default:
+						//不关心的事件，直接无视掉。
+				}
+			}
+		}
+	
+	可以说，事件循环是运行在多任务系统上的GUI程序的一个主线。所有的交互和响应基本都是在事件循环中完成的。但直接用面向过程的方式使用事件循环十分不方便，不便于思考程序的逻辑。所以，为了便于开发，多数的图形用户界面框架都对事件循环进行了封装。用各种不同的方法在框架内部分发处理消息。但无论怎样封装，只要把握主事件循环这条主线，很多图形用户界面框架就都很好上手了。例如：MFC的消息映射表、VB中的什么Click啊mouse move什么的等等。毕竟，只要知道怎样处理事件，我们就知道怎样与用户交互了。知道怎样与用户交互，其他的问题其实都好解决。
+	
+　　在Qt中，事件循环通过调用`exec()`来启动。如果你要执行一个事件较长的操作，你可以调用`processEvent()`来保持程序对新事件及时地响应（执行耗时较长的任务时，如果新事件一直被操作系统存放在队列中，而没有程序被及时地读取、处理。程序就会看上去像在埋头干自己的活而不理用户一样。显然这会严重影响用户体验）。
+
+　　通常，Qt推荐你在main()函数中创建QCoreApplication或QApplication对象，而且越早越好（毕竟，这是Qt程序的核心嘛）。然后通过调用`exec()`函数进入事件循环。这个函数直到事件循环结束时才会返回（比如`quit()`函数被调用的时候）。
+
+　　QCoreApplication中还提供了一些方便的静态成员函数。事件可以使用`sendEvent()`,`postEvent()`和`sendPostedEvents()`来发送。它还提供了`quit()`信号和`aboutToQuit()`槽（关于信号和槽的内容我们会在以后探究）。
+
+　　QCoreApplication还提供这样几个功能：
+
++  应用程序和库的路径
+
+	可以通过`applicationDirPath()`获取程序所在目录的路径，通过`applicationFilePath()`获取程序本身的路径。库的路径可以通过`libraryPaths()`获取，并通过`setLibraryPaths()`，`addLibraryPath()`和`removeLibraryPath()`函数进行操作。
+	
++  国际化和翻译
+
+	可以通过`installTranslator()`和`removeTranslator()`来添加或删除翻译文件。更多关于国际化的内容我们或者以后进行更深入的学习。
+
++  访问命令行参数
+
+	可以通过`arguments()`函数访问被QCoreApplication处理过的命令行参数。
+	
++  地域设置(Locale Settings)
+
+	在Unix/Linux上Qt默认使用系统默认的本地化设置。当然，这可能会导致一些冲突.例如：当将浮点数和字符串相互转换时，可能遇到各地的记法不同的问题。你可以通过在初始化QApplication或QCoreApplication后调用POSIX函数setlocale(LC_NUMERIC,"C")来重置地域的方法来解决这个问题。
+	
+#### 深入解读Hello World ####
+　　之前我们只对我们的Hello World做了目测式的简单理解，在详细查过Qt的文档后，我们重新解读一下这段代码。
+
+        #include <QApplication>
+        #include <QLabel>
+        
+        int main(int argc, char *argv[])
+        {
+			//这里可以添加一些初始化代码
+			//用于进行所有应该在QApplication创建之前进行的初始化
+			//比如：使用`setColorSpec()`分配颜色之类的
+			
+            QApplication a(argc, argv);
+			
+			//在QApplication初始化后，所有基于QWidget的类才能正常使用
+			//例如下面的QLabel什么的。
+ 
+            QLabel label("Hello World!");
+            label.show();
+    
+            return a.exec();
+        }
+
+　　程序头两行引用了QApplication类和QLabel类的头文件。
+
+　　接着，在main函数中，我们首先创建了一个QApplication实例，并将参数传入。按照Qt文档的建议，QApplication越早创建越好，所以习惯上，在main函数中进行完必要的初始化之后，就应该立刻创建QApplication(或QCoreApplication，其区别我们在上面已经解读过了)。
+
+　　接下来，我们就该创建Hello World程序的核心——一个标有Hello World字样的标签了。通过将Hello World字符串传入QLabel的构造函数，我们很轻松地实现了这个功能。当然，光这样是不行的，因为一般情况下基于QWidget的类（QLabel什么的）不会自动显示，需要我们手工调用`show()`函数让它显示出来（其实也有不少情况会自动显示，比如插入到QTabWidget中的QWidget，这个我们后面再慢慢学）。
+
+　　最后，也是最重要的一步，进入事件循环。这样，我们的使用Qt的GUI程序Hello World就算正式跑起来了。麻雀虽小，五脏俱全。可以庆祝一下胜利了。
