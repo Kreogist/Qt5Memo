@@ -51,8 +51,18 @@ FIXME：没实际经验，暂不写。
 
 1. 「文件」->「新建文件或项目」
 2. 选择「其他项目」中的「空Qt项目」
+3. 跟着Qt Creator的引导创建项目，我们的项目名就叫Hello World吧。
 
-创建好项目后在项目中添加main.cpp，输入以下代码：
+创建好项目后，首先在HelloWorld.pro中输入：
+
+        QT += core gui widgets
+        
+		SOURCES += \
+		    main.cpp
+			
+这段是用来描述我们的项目都需要包含什么内容的。qmake用它生成makefile（具体内容以后讨论）。我们需要使用Qt的core、gui和widgets三个模块，所以我们把它加入到项目中(`QT += core gui widgets`)。source指我们项目所包含的文件。这行不用自己敲，直接在Qt Creator->「项目」->「Hello World」上右键，然后添加main.cpp即可自动产生这行代码。
+
+在main.cpp中输入以下代码：
 
         #include <QApplication>
         #include <QLabel>
@@ -256,3 +266,453 @@ FIXME：没实际经验，暂不写。
 　　接下来，我们就该创建Hello World程序的核心——一个标有Hello World字样的标签了。通过将Hello World字符串传入QLabel的构造函数，我们很轻松地实现了这个功能。当然，光这样是不行的，因为一般情况下基于QWidget的类（QLabel什么的）不会自动显示，需要我们手工调用`show()`函数让它显示出来（其实也有不少情况会自动显示，比如插入到QTabWidget中的QWidget，这个我们后面再慢慢学）。
 
 　　最后，也是最重要的一步，进入事件循环。这样，我们的使用Qt的GUI程序Hello World就算正式跑起来了。麻雀虽小，五脏俱全。可以庆祝一下胜利了。
+
+#### 层层深入——跟着Hello World看看Qt内部 ####
+　　在高呼完Hello World!之后，我们或许又会产生新的问题，Qt的内部又是什么样子呢？众所周知，开放源代码的一大好处就是可以给那些渴望学习技术的人学习技术的机会。既然有这机会一窥这样一个成熟的框架，我们何不去试试呢？
+
+　　好，说干就干。可是Qt这样大的库，我们从哪里入手去看它的内部情况呢？其实，踏破铁鞋无觅处，得来全不费功夫。我们想知道Qt一步一步都做了什么，跟着我们刚刚的Hello World一步一步走不久可以了？调用了什么函数，执行了哪些操作，岂不一目了然？那我们现在就开始。
+
+　　（ *我们使用Qt 5.0.2版本的源代码。为使逻辑更清晰，无关的代码我们都直接忽略* ）
+　　首先，执行的是`QApplication a(argc, argv);`这是Hello World的起点，也是我们这趟深入Qt之旅的起点。
+
+        //qtbase/src/widgets/kernel/qapplication.h
+		class Q_WIDGETS_EXPORT QApplication : public QGuiApplication
+		{
+			//...
+			
+		public:
+			QApplication(int &argc, char **argv, int = ApplicationFlags);
+			//从这里继续深入
+			virtual ~QApplication();
+			
+			//...
+		}
+        
+        //qtbase/src/widgets/kernel/qapplication.cpp
+		QApplication::QApplication(int &argc, char **argv, int _internal)
+			: QGuiApplication(*new QApplicationPrivate(argc, argv, _internal))
+        {
+			QApplicationPrivate * const d = d_func()
+			d->construct();
+		}
+        //...
+
+然后转入QApplication的父类QGuiApplication的构造函数
+
+		//qtbase/src/gui/kernel/qguiapplication.h
+		//...
+		class Q_GUI_EXPORT QGuiApplication : public QCoreApplication
+        {	
+        public:
+			QGuiApplication(int &argc, char **argv, int = ApplicationFlags);
+			//从这里继续
+            virtual ~QGuiApplication();
+			
+			//...
+        }
+
+        //qtbase/src/gui/kernel/qguiapplication.cpp
+		QGuiApplication::QGuiApplication(int &argc, char **argv, int flags)
+            : QCoreApplication(*new QGuiApplicationPrivate(argc, argv, flags))
+        {
+			d_func()->init();
+			
+			QCoreApplicationPrivate::eventDispatcher->startingUp();
+		}
+
+和QApplication的定义相当相似，我们继续进入到QCoreApplication中一探究竟。
+
+        //qtbase/src/corelib/kernel/qcoreaapplication.h
+		//...
+		
+		class Q_CORE_EXPORT QCoreApplication : public QObject
+		{
+			//...
+			
+			QCoreApplication(int &argc, char **argv, int = ApplicationFlags);
+			~QCoreApplication();
+			
+			//...
+			
+		private:
+			void init();
+				
+			//...
+		}
+
+        //qtbase/src/corelib/kernel/qcoreapplication.cpp
+		//...
+		
+		QCoreApplication::QCoreApplication(int &argc, char **argv, int _internal)
+            : QObject(*new QCoreApplicationPrivate(argc, argv, _internal))
+		{
+			init();
+			QCoreApplicationPrivate::eventDispatcher->startingUp();
+		}
+	
+终于找到有实际意义的函数`QCoreApplication::init()`了，几经辗转啊！
+
+        //qtbase/src/corelib/kernel/qcoreapplication.cpp
+		void QCoreApplication::init()
+		{
+			QCoreApplicationPrivate * const d = d_func()
+			
+			//初始化Loacle
+			QCoreApplicationPrivate::initLocale();
+			
+			//判断是否已经创建过一个应用程序对象
+			Q_ASSERT_X(!self, "QCoreApplication", "there should be only one application object");
+			QCoreApplication::self = this;
+			
+			//使用app程序员创建的事件分发器(如果有的话)
+			if (!QCoreApplicationPrivate::eventDispatcher)
+				QCoreApplicationPrivate::eventDispatcher = d->threadData->eventDispatcher;
+			//如果没有，自动创建一个默认的
+			if (!QCoreApplicationPrivate::eventDispatcher)
+				d->createEventDispatcher();
+			Q_ASSERT(QCoreApplicationPrivate::eventDispatcher != 0);
+			
+			if (!QCoreApplicationPrivate::eventDispatcher->parent()) {
+				QCoreApplicationPrivate::eventDispatcher->moveToThread(d->threadData->thread);
+				QCoreApplicationPrivate::eventDispatcher->setParent(this);
+			}
+			
+			d->threadData->eventDispatcher = QCoreApplicationPrivate::eventDispatcher;
+		
+        #ifndef QT_NO_LIBRARY
+		    if (coreappdata()->app_libpaths)
+			    d->appendApplicationPathToLibraryPaths();
+        #endif
+		
+        #if defined(Q_OS_UNIX) && !(defined(QT_NO_PROCESS))
+			// Make sure the process manager thread object is created in the main
+			// thread.
+			QProcessPrivate::initializeProcessManager();
+        #endif
+		
+        #ifdef QT_EVAL
+			extern void qt_core_eval_init(uint);
+			qt_core_eval_init(d->application_type);
+        #endif
+			
+			//处理命令行参数
+			d->processCommandLineArguments();
+			
+			//
+			qt_startup_hook();
+		}
+		//
+
+
+这么复杂的一堆代码我们自然不可能都看完。着重看一下我们一直关注的和事件处理相关的部分吧。我们来看看Qt是怎样创建默认的事件分发器的。透过这里的代码，我们应该可以简单地推测一下Qt是如何跨平台的。
+
+        //qtbase/src/corelib/kernel/qcoreapplication.cpp
+		void QCoreApplicationPrivate::createEventDispatcher()
+		{
+			Q_Q(QCoreApplication);
+			
+		//为Unix类平台创建事件分发器
+        #if defined(Q_OS_UNIX)
+        #  if defined(Q_OS_BLACKBERRY)
+			//黑莓平台
+			eventDispatcher = new QEventDispatcherBlackberry(q);
+        #  else
+        #  if !defined(QT_NO_GLIB)
+			if (qEnvironmentVariableIsEmpty("QT_NO_GLIB") && QEventDispatcherGlib::versionSupported())
+				//Glib事件分发器
+				eventDispatcher = new QEventDispatcherGlib(q);
+			else
+        #  endif
+			//UNIX事件分发器
+            eventDispatcher = new QEventDispatcherUNIX(q);
+        #  endif
+        #elif defined(Q_OS_WIN)
+			//windows事件分发器
+			eventDispatcher = new QEventDispatcherWin32(q);
+        #else
+			//没有发现该使用何种事件分发器
+        #  error "QEventDispatcher not yet ported to this platform"
+        #endif
+		}
+		
+在这里为不同的平台选择了不同的事件分发器。看来Qt使用了QAbstractEventDispatcher这个抽象类来抽象不同平台的差异，并为不同平台实现对应的子类。我们来看看QEventDispatcherWin32类。
+
+	    bool QEventDispatcherWin32::processEvents(QEventLoop::ProcessEventsFlags flags)
+		{
+			Q_D(QEventDispatcherWin32);
+			
+			if (!d->internalHwnd)
+				createInternalHwnd();
+			
+			d->interrupt = false;
+			emit awake();
+			
+			bool canWait;
+			bool retVal = false;
+			bool seenWM_QT_SENDPOSTEDEVENTS = false;
+			bool needWM_QT_SENDPOSTEDEVENTS = false;
+			do {
+				DWORD waitRet = 0;
+				HANDLE pHandles[MAXIMUM_WAIT_OBJECTS - 1];
+				QVarLengthArray<MSG> processedTimers;
+				while (!d->interrupt) {
+					DWORD nCount = d->winEventNotifierList.count();
+					Q_ASSERT(nCount < MAXIMUM_WAIT_OBJECTS - 1);
+				
+					MSG msg;
+					bool haveMessage;
+					
+					if (!(flags & QEventLoop::ExcludeUserInputEvents) && !d->queuedUserInputEvents.isEmpty()) {
+						// 处理队列中的用户输入事件
+						haveMessage = true;
+						msg = d->queuedUserInputEvents.takeFirst();
+					} else if(!(flags & QEventLoop::ExcludeSocketNotifiers) && !d->queuedSocketEvents.isEmpty()) {
+						// 处理队列中的socket事件
+						haveMessage = true;
+						msg = d->queuedSocketEvents.takeFirst();
+					} else {
+						//调用win32api读取windows的消息队列
+						haveMessage = PeekMessage(&msg, 0, 0, 0, PM_REMOVE);
+						if (haveMessage && (flags & QEventLoop::ExcludeUserInputEvents)
+							&& (//笔者吐槽：这对括号中间包含的东西也太多了吧，差点没区分出来
+							(msg.message >= WM_KEYFIRST
+							&& msg.message <= WM_KEYLAST)
+							//WM_KEYFIRST和WM_KEYLAST可作为过滤值取得所有键盘消息——源自百度百科
+							
+							|| (msg.message >= WM_MOUSEFIRST
+								&& msg.message <= WM_MOUSELAST)
+								//常数WM_MOUSEFIRST和WM_MOUSELAST可用来接收所有的鼠标消息——还是来自百度百科
+								
+							|| msg.message == WM_MOUSEWHEEL
+							|| msg.message == WM_MOUSEHWHEEL
+							//鼠标滚轮消息
+							
+							|| msg.message == WM_TOUCH
+                        #ifndef QT_NO_GESTURES
+						    || msg.message == WM_GESTURE
+							|| msg.message == WM_GESTURENOTIFY
+                        #endif
+							
+							|| msg.message == WM_CLOSE)
+							) {
+							// 将输入的消息插入队列中
+							haveMessage = false;
+							d->queuedUserInputEvents.append(msg);
+						}
+						
+						if (haveMessage && (flags & QEventLoop::ExcludeSocketNotifiers)
+							&& (msg.message == WM_QT_SOCKETNOTIFIER && msg.hwnd == d->internalHwnd)) {
+							//将socket事件插入队列中
+							haveMessage = false;
+							d->queuedSocketEvents.append(msg);
+						}
+					}
+					if (!haveMessage) {
+						// 没有消息，检查发出信号的对象
+						for (int i=0; i<(int)nCount; i++)
+							pHandles[i] = d->winEventNotifierList.at(i)->handle();
+						waitRet = MsgWaitForMultipleObjectsEx(nCount, pHandles, 0, QS_ALLINPUT, MWMO_ALERTABLE);
+						if ((haveMessage = (waitRet == WAIT_OBJECT_0 + nCount))) {
+							// 一条新消息到达，处理它
+						continue;
+					}
+				}
+				if (haveMessage) {
+					
+					if (d->internalHwnd == msg.hwnd && msg.message == WM_QT_SENDPOSTEDEVENTS) {
+						if (seenWM_QT_SENDPOSTEDEVENTS) {
+							// when calling processEvents() "manually", we only want to send posted
+							// events once
+							needWM_QT_SENDPOSTEDEVENTS = true;
+							continue;
+						}
+						seenWM_QT_SENDPOSTEDEVENTS = true;
+					} else if (msg.message == WM_TIMER) {
+						// avoid live-lock by keeping track of the timers we've already sent
+						bool found = false;
+						for (int i = 0; !found && i < processedTimers.count(); ++i) {
+							const MSG processed = processedTimers.constData()[i];
+							found = (processed.wParam == msg.wParam && processed.hwnd == msg.hwnd && processed.lParam == msg.lParam);
+						}
+						if (found)
+							continue;
+						processedTimers.append(msg);
+					} else if (msg.message == WM_QUIT) {
+						if (QCoreApplication::instance())
+							QCoreApplication::instance()->quit();
+						return false;
+					}
+					
+					if (!filterNativeEvent(QByteArrayLiteral("windows_generic_MSG"), &msg, 0)) {
+						//终于出现了，win32程序消息处理函数中的常客
+						TranslateMessage(&msg);
+						DispatchMessage(&msg);
+					}
+				} else if (waitRet - WAIT_OBJECT_0 < nCount) {
+					d->activateEventNotifier(d->winEventNotifierList.at(waitRet - WAIT_OBJECT_0));
+				} else {
+					// 无事可做，退出
+					break;
+				}
+				retVal = true;
+			}
+			
+			// 仍然无事可做，等待消息或对象发出信号
+			canWait = (!retVal
+			&& !d->interrupt
+			&& (flags & QEventLoop::WaitForMoreEvents));
+			if (canWait) {
+				DWORD nCount = d->winEventNotifierList.count();
+				Q_ASSERT(nCount < MAXIMUM_WAIT_OBJECTS - 1);
+				for (int i=0; i<(int)nCount; i++)
+					pHandles[i] = d->winEventNotifierList.at(i)->handle();
+					
+				emit aboutToBlock();
+				waitRet = MsgWaitForMultipleObjectsEx(nCount, pHandles, INFINITE, QS_ALLINPUT, MWMO_ALERTABLE | MWMO_INPUTAVAILABLE);
+				emit awake();
+				if (waitRet - WAIT_OBJECT_0 < nCount) {
+					d->activateEventNotifier(d->winEventNotifierList.at(waitRet - WAIT_OBJECT_0));
+					retVal = true;
+				}
+			}
+			} while (canWait);
+			
+			if (!seenWM_QT_SENDPOSTEDEVENTS && (flags & QEventLoop::EventLoopExec) == 0) {
+				// when called "manually", always send posted events
+				sendPostedEvents();
+			}
+			
+			if (needWM_QT_SENDPOSTEDEVENTS)
+				PostMessage(d->internalHwnd, WM_QT_SENDPOSTEDEVENTS, 0, 0);
+			
+			return retVal;
+		}
+		//
+
+
+长长一大片代码，虽然有些杂乱无章，不过还是看到了我们想要看的东西：`PeekMessage()`这是windows平台上读取消息用的一个函数，说明我们已经成功地找到了Qt获取并分发消息的地方。现在，让我们来简单整理一下思路。Qt程序的跨平台方案是这样的：Qt程序在编译时通过`Q_OS_UNIX`、`Q_OS_WIN32`等宏判断目标平台，然后选择创建对应的事件分发器。所有的事件分发器均基于QAbstractEventDispatcher抽象类。这样，不同平台的差异性就被抽象了出来，具体实现由QEventDispatcherWin32等等子类实现，这使得Qt的平台相关的部分与那些与平台无关的部分分离。
+  
+那么，最后，我们进入`exec()`函数，也即进入事件循环。具体查找Qt源代码的过程和上面相仿，我们直接给出结果，就不再赘述无关紧要的细节了。
+
+        //qtbase/src/corelib/kernel/qcoreapplication.cpp
+        int QCoreApplication::exec()
+		{
+			if (!QCoreApplicationPrivate::checkInstance("exec"))
+				return -1;
+			
+			QThreadData *threadData = self->d_func()->threadData;
+			if (threadData != QThreadData::current()) {
+				//检查是否是从主线程调用的，如果不是，则报错
+				qWarning("%s::exec: Must be called from the main thread", self->metaObject()->className());
+				return -1;
+			}
+			if (!threadData->eventLoops.isEmpty()) {
+				//检查是否已经运行事件循环了
+				qWarning("QCoreApplication::exec: The event loop is already running");
+				return -1;
+			}
+			
+			threadData->quitNow = false;
+			QEventLoop eventLoop;
+			self->d_func()->in_exec = true;
+			self->d_func()->aboutToQuitEmitted = false;
+			
+			//笔者吐槽：封装也太厚了，完全超乎笔者的想象啊。
+			//从这里移交给QEventLoop的exec()
+			int returnCode = eventLoop.exec();
+			
+			threadData->quitNow = false;
+			if (self) {
+				self->d_func()->in_exec = false;
+				if (!self->d_func()->aboutToQuitEmitted)
+					emit self->aboutToQuit(QPrivateSignal());
+				self->d_func()->aboutToQuitEmitted = true;
+				sendPostedEvents(0, QEvent::DeferredDelete);
+			}
+			
+			return returnCode;
+		}
+		
+好吧，又调用了QEventLoop的`exec()`函数，真是层层转接啊。没办法，打开eventloop的源文件看：
+
+        //qtbase/src/corelib/kernel/qeventloop.cpp
+		int QEventLoop::exec(ProcessEventsFlags flags)
+        {
+            Q_D(QEventLoop);
+			//这里是为了线程安全做的保护
+            //we need to protect from race condition with QThread::exit
+            QMutexLocker locker(&static_cast<QThreadPrivate *>(QObjectPrivate::get(d->threadData->thread))->mutex);
+            if (d->threadData->quitNow)
+                return -1;
+
+            if (d->inExec) {
+                qWarning("QEventLoop::exec: instance %p has already called exec()", this);
+                return -1;
+            }
+
+            struct LoopReference {
+                QEventLoopPrivate *d;
+                QMutexLocker &locker;
+
+                bool exceptionCaught;
+                LoopReference(QEventLoopPrivate *d, QMutexLocker &locker) : d(d), locker(locker), exceptionCaught(true)
+                {
+                    d->inExec = true;
+                    d->exit = false;
+                    ++d->threadData->loopLevel;
+                    d->threadData->eventLoops.push(d->q_func());
+                    locker.unlock();
+                }
+
+                ~LoopReference()
+                {
+                    if (exceptionCaught) {
+                        qWarning("Qt has caught an exception thrown from an event handler. Throwing\n"
+                                 "exceptions from an event handler is not supported in Qt. You must\n"
+                                 "reimplement QApplication::notify() and catch all exceptions there.\n");
+                    }
+                    locker.relock();
+                    QEventLoop *eventLoop = d->threadData->eventLoops.pop();
+                    Q_ASSERT_X(eventLoop == d->q_func(), "QEventLoop::exec()", "internal error");
+                    Q_UNUSED(eventLoop); // --release warning
+                    d->inExec = false;
+                    --d->threadData->loopLevel;
+                }
+            };
+            LoopReference ref(d, locker);
+
+            // 当进入一个新的事件循环时，移除所有已经发送的quit事件
+            QCoreApplication *app = QCoreApplication::instance();
+            if (app && app->thread() == thread())
+                QCoreApplication::removePostedEvents(app, QEvent::Quit);
+			
+			//笔者吐槽：经历了千沟万壑，终于看到事件循环了。但，怎么这么短啊！太令人失望了
+			//如果没有被要求退出，就一直循环并不断处理消息
+            while (!d->exit)
+                processEvents(flags | WaitForMoreEvents | EventLoopExec);
+
+            ref.exceptionCaught = false;
+            return d->returnCode;
+        }
+
+然后，我们看一看处理消息的函数：
+
+        bool QEventLoop::processEvents(ProcessEventsFlags flags)
+		{
+            Q_D(QEventLoop);
+            if (!d->threadData->eventDispatcher)
+                return false;
+            return d->threadData->eventDispatcher->processEvents(flags);
+        }
+
+这个函数就很简单了，调用我们之前已经创建好的事件分发器的事件处理函数而已。至此，Qt程序运行的基本轮廓就已经被勾勒完全了。
+
+#### Qt程序运行基本轮廓 ####
+在繁琐的跟踪过程之后，我们简单整理一下我们所看到的内容：
+
+1.  对locale等等内容进行初始化
+2.  创建对应平台的事件分发器
+3.  调用`exec()`进入事件循环，直到接受到退出消息。
+
+其中，事件循环是通过在QEventLoop中不断调用QAbstractEventDispatcher的子类的`processEvents()`实现的。
+
