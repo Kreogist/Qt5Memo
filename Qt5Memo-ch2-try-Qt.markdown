@@ -64,18 +64,20 @@ FIXME：没实际经验，暂不写。
 
 在main.cpp中输入以下代码：
 
-        #include <QApplication>
-        #include <QLabel>
-        
-        int main(int argc, char *argv[])
-        {
-            QApplication a(argc, argv);
+```cpp
+#include <QApplication>
+#include <QLabel>
 
-            QLabel label("Hello World!");
-            label.show();
+int main(int argc, char *argv[])
+{
+    QApplication a(argc, argv);
     
-            return a.exec();
-        }
+    QLabel label("Hello World!");
+    label.show();
+    
+    return a.exec();
+}
+```
 		
 　　编译，运行。然后一个Hello world程序就完成了，很简单，不是吗？
 

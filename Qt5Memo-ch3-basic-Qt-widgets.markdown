@@ -180,8 +180,10 @@
 ### 创建状态栏 ###
 　　创建状态栏和创建菜单栏类似，你可以使用`statusBar()`，它会返回当前的状态栏，如果没有则会创建一个。当然，也可以通过`setStatusBar()`设置一个。
 
-　　我们现在来亲自试试创建一个文本编辑器的菜单栏和状态栏。
+### 亲自试试 ###
+　　在这份备忘录的开头，我们提过，这份备忘录是我们学习Qt并尝试编写IDE的过程中产生的。所以，我们现在来亲自试试创建一个IDE（或许目前的情况叫文本编辑器更合适）所需的菜单栏和状态栏。
 
+	//version 0.0.0.1
 	//mainwindow.h
 	class MainWindow : public QMainWindow
 	{
@@ -421,4 +423,43 @@
 
 　　默认情况下，你每形成一个连接，就会发出一个信号。重复的连接会发出两个信号。你可以通过调用`disconnect()`函数断开连接。如果你向`connect()`传入Qt::UniqueConnection参数，那么只有当以前没有建立过连接时，连接才会被建立。如果连接已经重复了(同一个信号连到了同一个对象的同一个槽上多次)，连接会失败，然后返回false。
 
-　　这个例子是为了说明，QObject对象可以在不需要知道其它QObject对象任何信息的情况下和其一起工作。你只需要将它们连接在一起就可以实现让它们协同工作。想象一下，只需要调用几个connect函数就可以让许多强大的Qt部件协同工作，构成一个软件是多么惬意的一件事。
+　　这个例子是为了说明，QObject对象可以在不需要知道其它QObject对象任何信息的情况下和其一起工作。你只需要将它们连接在一起就可以实现让它们协同工作。想象一下，只需要调用几个connect函数就可以让许多强大的Qt部件协同工作，完成一个软件是多么惬意的一件事。
+
+## 连接信号和槽 ##
+　　我们接着回到我们之前的项目中。我们现在使用信号和槽机制为我们的编辑器增加退出功能。退出也就是当用户出发退出动作后，主窗口自动关闭。也即退出动作发出一个表明自己被触发了的信号后，主窗口自动关闭即可。
+
+　　也就是说，我们只需要把退出动作被触发的信号连接到主窗口的`close()`槽上即可。
+	
+	//quit
+    act[quit]=new QAction(tr("quit"),this);
+    connect(act[quit],SIGNAL(triggered()),this,SLOT(close()));
+	
+　　只需要这样改写一下，再编译运行，即可实现退出功能。
+
+　　如我们的例子中所见，连接信号和槽的函数叫connect。那么，这个函数具体有什么作用，又有那些用法。让我们来进入Qt5的文档一探究竟。
+
+　　connect函数一共有五种形式：
+
+	QMetaObject::Connection QObject::connect(
+		const QObject * sender, const char * signal,
+		const QObject * receiver, const char * method,
+		Qt::ConnectionType type = Qt::AutoConnection) [static]
+		
+	QMetaObject::Connection QObject::connect(
+		const QObject * sender,	const QMetaMethod & signal,
+		const QObject * receiver, const QMetaMethod & method,
+		Qt::ConnectionType type = Qt::AutoConnection) [static]
+		
+	QMetaObject::Connection QObject::connect(
+		const QObject * sender,	const char * signal, const char * method,
+		Qt::ConnectionType type = Qt::AutoConnection) const
+		
+	QMetaObject::Connection QObject::connect(
+		const QObject * sender,	PointerToMemberFunction signal,
+		const QObject * receiver, PointerToMemberFunction method,
+		Qt::ConnectionType type) [static]
+		
+	QMetaObject::Connection QObject::connect(
+		const QObject * sender, PointerToMemberFunction signal, Functor functor) [static]
+		
+　　下面让我们来一个一个的学习。
