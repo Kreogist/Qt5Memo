@@ -429,13 +429,16 @@
 　　我们接着回到我们之前的项目中。我们现在使用信号和槽机制为我们的编辑器增加退出功能。退出也就是当用户出发退出动作后，主窗口自动关闭。也即退出动作发出一个表明自己被触发了的信号后，主窗口自动关闭即可。
 
 　　也就是说，我们只需要把退出动作被触发的信号连接到主窗口的`close()`槽上即可。
-	
-	//quit
-    act[quit]=new QAction(tr("quit"),this);
-    connect(act[quit],SIGNAL(triggered()),this,SLOT(close()));
+
+```cpp
+//quit
+act[quit]=new QAction(tr("quit"),this);
+connect(act[quit],SIGNAL(triggered()),this,SLOT(close()));
+```
 	
 　　只需要这样改写一下，再编译运行，即可实现退出功能。
 
+### connect 函数 ###
 　　如我们的例子中所见，连接信号和槽的函数叫connect。那么，这个函数具体有什么作用，又有那些用法。让我们来进入Qt5的文档一探究竟。
 
 　　connect函数一共有五种形式：
@@ -460,6 +463,339 @@
 		Qt::ConnectionType type) [static]
 		
 	QMetaObject::Connection QObject::connect(
-		const QObject * sender, PointerToMemberFunction signal, Functor functor) [static]
+		const QObject * sender,
+		PointerToMemberFunction signal,
+		Functor functor) [static]
 		
 　　下面让我们来一个一个的学习。
+
+第一种：QMetaObject::Connection QObject::connect(
+		const QObject * sender, const char * signal,
+		const QObject * receiver, const char * method,
+		Qt::ConnectionType type = Qt::AutoConnection) [static] 
+
+　　创建一个从`sender`对象中的`signal`到`receiver`对象中的`method`的指定类型(type)的连接。返回一个指向连接的句柄。这个句柄可以用于以后中断连接(diconnect)。当你指定`signal`和`method`时必须使用`SIGNAL()`和`SLOT()`宏。这里有一个Qt5Doc中的例子：
+	
+```cpp
+QLabel *label = new QLabel;
+QScrollBar *scrollBar = new QScrollBar;
+QObject::connect(scrollBar, SIGNAL(valueChanged(int)),
+	　　　　　　label,  SLOT(setNum(int)));
+```
+
+　　这个样例建立了一个QScrollBar和一个QLabel。当用户操作QScrollBar时，QScrollBar的值会发生改变。此时，用于显示QScrollBar具体数值的QLabel的内容也必须随之改变。老式的框架会使用回调，也即把改变label内容的函数的地址传给scrollbar。当scrollbar改变时调用回调函数改变label的值。而Qt的设计使得这一工作要简单得多。我们只需要把scrollBar发出的`valueChanged(int)`信号和label的`setNum(int)`槽连接起来即可。信号中带有一个代表新的值的参数，这个参数会被自动传入槽中。而label的setNum槽在接到参数后会自动改变label显示的内容。
+
+　　一定注意，连接信号和槽时值带参数类型即可，一定不要带参数名。例如下面这种就是错误的：
+	
+```cpp
+// WRONG
+QObject::connect(scrollBar, SIGNAL(valueChanged(int value)),
+	             label, SLOT(setNum(int value)));
+```
+	
+　　如之前所说，信号也是可以连接到信号的。Qt5Doc中接下来的例子展示了这一点。
+	
+```cpp
+class MyWidget : public QWidget
+{
+    Q_OBJECT
+
+public:
+    MyWidget();
+
+signals:
+    void buttonClicked();
+
+private:
+    QPushButton *myButton;
+};
+
+MyWidget::MyWidget()
+{
+    myButton = new QPushButton(this);
+    connect(myButton, SIGNAL(clicked()),
+            this, SIGNAL(buttonClicked()));
+}
+```
+
+　　在这个例子中，我们可以看到MyWidget的`clicked()`信号直接和它自己的`buttonClicked()`信号连接起来了。这样，当`clicked()`信号发出时，`buttonClicked()`信号也会被发出。
+
+　　一个信号可以被连接到多个槽上，一个槽也可以和多个信号相连。在一个信号被连接到很多个槽上的情况下，如果该信号被发出，则会按照建立连接的先后顺序调用槽。
+
+　　connect()函数会返回一个QMetaObject::connection类型的返回值，代表一个建立好的连接的句柄。如果连接失败，那么这个句柄将会是无效的。例如如果一个QObject无法核实signal或method是否存在，或者它们所携带的参数是不兼容的，那么连接就会失败。我们可以通过将QMetaObject::connection转换成bool来判断句柄是否是有效的。
+
+　　接着我们来看看最后一个参数，type究竟是做什么用的。根据Qt的文档，它描述了建立的连接的类型。具体的说就是type决定了当信号发出时，槽是被立即触发，还是被加入一个队列中，稍后触发(queued for delivery at a later time)。如果信号被加入队列，那么其参数必须是Qt的meta-object系统知道的类型，因为Qt需要在后台拷贝以储存它们。你可以使用`qRegisterMetaType()`来在meta-object系统中注册你自定义的类型。
+
+　　这个函数是线程安全的(thread-safe)。
+
+	*QObject::connect: Cannot queue arguments of type 'MyType'错误* 这是因为你的类型(即样例中的`MyType`)没有被注册到Qt的Meta-Object系统中。你需要调用`qRegisterMetaType()`来注册它。
+	
+第二种：QMetaObject::Connection QObject::connect(
+		const QObject * sender,	const QMetaMethod & signal,
+		const QObject * receiver, const QMetaMethod & method,
+		Qt::ConnectionType type = Qt::AutoConnection) [static]
+		
+　　这个函数和上面的那个作用完全相同，只不过是使用QMetaMethod来指定具体的信号(`signal`)和方法(`method`)。
+	
+第三种：QMetaObject::Connection QObject::connect(
+		const QObject * sender,	const char * signal, const char * method,
+		Qt::ConnectionType type = Qt::AutoConnection) const
+	
+　　这个形式估计是为大家少敲几个字母准备的，因为这个函数完全等价于`connect(sender,signal,this,method,type)`。同样，这个函数也是线程安全的。
+	
+第四种：QMetaObject::Connection QObject::connect(
+		const QObject * sender,	PointerToMemberFunction signal,
+		const QObject * receiver, PointerToMemberFunction method,
+		Qt::ConnectionType type) [static]
+		
+　　这种形式是Qt5新增的，功能和之前第一种完全相同。
+
+　　之前的例子，使用这个connect形式表示就是这样：
+
+```cpp
+QLabel *label = new QLabel;
+QLineEdit *lineEdit = new QLineEdit;
+QObject::connect(lineEdit, &QLineEdit::textChanged,
+                 label,  &QLabel::setText);
+```
+
+第五种：QMetaObject::Connection QObject::connect(
+		const QObject * sender,
+		PointerToMemberFunction signal,
+		Functor functor) [static]
+
+　　这也是Qt5中新增的语法。这个connect函数中的槽函数可以是任意函数(function)或者仿函数(functor)，只要是可以连接到该信号上的就可以。也就是说，只要这个函数所需要传入的参数不多于信号提供的参数即可作为槽函数使用。而对于仿函数，它的参数数量和信号提供的参数数量完全相等时才能作为槽函数使用。Qt5Doc提供的样例如下：
+
+样例：
+```cpp
+void someFunction();
+QPushButton *button = new QPushButton;
+QObject::connect(button, &QPushButton::clicked, someFunction);
+```
+
+如果你的编译器支持C++11的lambda表达式，你也可以这样做：
+```cpp
+QByteArray page = ...;
+QTcpSocket *socket = new QTcpSocket;
+socket->connectToHost("qt-project.org", 80);
+QObject::connect(socket, &QTcpSocket::connected, [=] () {
+        socket->write("GET " + page + "\r\n");
+    });
+```
+
+　　如果发送者被析构了，这个连接会自动断开。这个函数也是线程安全的。
+	
+### 关于Qt5中新的信号与槽语法的讨论 ###
+　　Qt5中的一个给力的新功能就是它的信号与槽的新语法。这种语法充分发挥了C++11的优势，使得开发变得更安全而简单。
+
+　　新的写法有这样几个优势：
+
++  编译期：检查信号与槽是否存在，参数类型检查，Q_OBJECT是否存在
+
++  信号可以和普通的函数、类的普通成员函数、lambda函数连接（而不再局限于信号函数和槽函数）
+
++  参数可以是 typedef 的或使用不同的namespace specifier
+
++  可以允许一些自动的类型转换（即信号和槽参数类型不必完全匹配）
+
+　　其劣势是：
+
++  当出现重载时语法比较复杂
+
++  槽中的默认参数不再被支持
+
+### 当新语法遇到重载 ###
+　　新语法的一个问题是当遇到重组时会变得很复杂。例如下面这段代码：
+
+```cpp
+class ClassA : public QObject
+{
+    Q_OBJECT
+...    
+signals:
+    void mySignal(double d);
+	void mySignal(QString s);
+...
+};
+```
+
+　　假设我们想把mySignal(QString)和ClassB的mySlot连接起来，我们没法简单地这样写：
+
+	connect(&a, &ClassA::mySignal, &b, &ClassB::mySlot);
+	
+　　因为mySignal实际上有两个，一个是double的，一个是QString的。这样写编译器无法知道你究竟调用的是哪一个。因此，当遇到重载时，会变得非常麻烦。我们需要显式调用static_cast来表明我们具体使用哪个重载。所以，正确的写法是：
+
+    connect(&a, static_cast<void (ClassA::*)(QString)>(&ClassA::mySignal), &b, &ClassB::mySlot);
+
+　　当遇到槽被重载时也是如此处理，就不赘述了。(笔者吐槽，这种情况下好像还是Qt4的老语法写着更简单一些)
+
+### 用法：简洁的异步调用 ###
+　　使用C++11使得很多操作都可以简单地完成。这里有一些源自qt-project.org的例子。
+
+```cpp
+void doYourStuff(const QByteArray &page)
+{
+    QTcpSocket *socket = new QTcpSocket;
+	socket->connectToHost("qt.nokia.com", 80);
+	QObject::connect(socket, &QTcpSocket::connected, [socket, page] () {
+        socket->write(QByteArray("GET " + page + "\r\n"));
+	});
+	QObject::connect(socket, &QTcpSocket::readyRead, [socket] () {
+		qDebug()<< "GOT DATA "<< socket->readAll();
+	});
+	QObject::connect(socket, &QTcpSocket::disconnected, [socket] () {
+		qDebug()<< "DISCONNECTED ";
+		socket->deleteLater();
+	});
+	
+	QObject::connect(socket, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error), [socket] (QAbstractSocket::SocketError) {
+	qDebug()<< "ERROR " << socket->errorString();
+	socket->deleteLater();
+	});
+}
+```
+　　这里还有一个打开对话框但不需要阻塞主事件循环的例子。
+```cpp
+void Doc::saveDocument() {
+	QFileDialog *dlg = new QFileDialog();
+	dlg->open();
+	
+	QObject::connect(dlg, &QDialog::finished, [dlg, this](int result) {
+		if (result) {
+			QFile file(dlg->selectedFiles().first());
+			// ...
+		}
+		dlg->deleteLater();
+	});
+
+}
+```
+
+　　展开想象的翅膀，还有更多应用方法等待你发觉。
+
+### 小插曲：lambda表达式 ###
+
+## 高级信号与槽用法 ##
+
+### sender()和receivers() ###
+　　有些情况下，我们需要知道究竟是哪个对象发出信号。这时，我们可以调用`sender()`函数。函数原型如下：
+
+	QObject * QObject::sender() const [protected]
+	
+　　在一个被信号激活的槽中调用该函数，该函数会返回一个指向发送信号的QObject的指针。否则，会返回0。The pointer is valid only during the execution of the slot that calls this function from this object's thread context.
+
+
+
+这里我们写了个例子，以更清楚地说明这种情况。
+	
+```cpp
+//Qt5Memo/src/signals-with-several-slots/example.h
+//我们建立一个类来展示多个槽连接到同一个信号的情况。
+//slot1,slot2,slot3这三个槽分别会输出slot1,slot2,slot3
+//这样，我们就可以通过输出知道他们被调用的顺序。
+#include <QObject>
+#include <iostream>
+
+using namespace std;
+
+class Example : public QObject
+{
+    Q_OBJECT
+public:
+    explicit Example(QObject *parent = 0);
+
+    void emit_signal(){emit signal_emited();}
+    void connect123();
+    void connect132();
+    void break_connection();
+
+public slots:
+    void slot1(){cout<<"slot1"<<endl;}
+    void slot2(){cout<<"slot2"<<endl;}
+    void slot3(){cout<<"slot3"<<endl;}
+
+signals:
+    void signal_emited();
+
+private:
+    QMetaObject::Connection connection_handle[3];
+    
+};
+
+#endif // EXAMPLE_H
+```
+
+```cpp
+//Qt5Memo/src/signals-with-several-slots/example.cpp
+//一些具体的实现。
+//connect123和connect132分别按不同顺序连接信号和槽。
+#include "example.h"
+
+Example::Example(QObject *parent) :
+    QObject(parent)
+{
+}
+
+void Example::connect123()
+{
+    connection_handle[0]=connect(this,SIGNAL(signal_emited()),this,SLOT(slot1()));
+    connection_handle[1]=connect(this,SIGNAL(signal_emited()),this,SLOT(slot2()));
+    connection_handle[2]=connect(this,SIGNAL(signal_emited()),this,SLOT(slot3()));
+}
+
+void Example::connect132()
+{
+    connection_handle[0]=connect(this,SIGNAL(signal_emited()),this,SLOT(slot1()));
+    connection_handle[1]=connect(this,SIGNAL(signal_emited()),this,SLOT(slot3()));
+    connection_handle[2]=connect(this,SIGNAL(signal_emited()),this,SLOT(slot2()));
+}
+
+void Example::break_connection()
+{
+    for(int i=0;i<3;i++)
+        disconnect(connection_handle[i]);
+}
+```
+接着，我们开始我们的实验。
+
+```cpp
+//Qt5Memo/src/signals-with-several-slots/main.cpp
+#include <QCoreApplication>
+#include <QObject>
+
+#include "example.h"
+
+int main(int argc, char *argv[])
+{
+    QCoreApplication a(argc, argv);
+
+    Example e;
+    //首先，我们按slot1,slot2,slot3的顺序把槽连到同一个信号上
+    //然后，发出信号。
+    e.connect123();
+    e.emit_signal();
+
+    e.break_connection();
+
+    //接着，我们重新按slot1,slot3,slot2的顺序把槽连到同一个信号上
+    //然后，再发出信号。
+    e.connect132();
+    e.emit_signal();
+
+    e.break_connection();
+    
+    return a.exec();
+}
+```
+
+运行结果：
+
+    slot1
+    slot2
+    slot3
+    slot1
+    slot3
+    slot2
+
+可以清晰的看出，槽的调用顺序和我们连接他们的顺序是一致的。
+
