@@ -1,4 +1,4 @@
-﻿# Qt学习备忘录2：初试Qt#
+# Qt学习备忘录2：初试Qt#
 　　在对Qt做完了基本的介绍之后（其实，你认为这是布道我也没太大意见），我们开始尝试一下Qt。先配置一下Qt的环境，然后用Qt写个简单的程序（对，你猜对了，就是hello，world）。感受一下用Qt写程序的感觉。
 
 ## 如何安装Qt开发环境 ##
@@ -33,13 +33,8 @@
 	（注意：笔者不使用sudo安装时会发生错误，但使用sudo后Qt Creator的配置文件的读写均需root权限，需手工修改权限为普通用户可读写，否则调Qt Creator设置的时候会报错。大牛们如果有更好的方法，还请赐教）
 	
 #### Windows ####
-	在Windows环境下搭建Qt环境的方法较为唯一，首先请到Qt官网获得离线安装包文件。
-	
-	对于Windows环境来说，5.0.1版本共有4个安装包，其中32位的安装包有三种，所采用的编译器（库）不一样：MinGW 4.7（650 MB）、VS 2010（485 MB）和VS 2010, OpenGL（476 MB）。而64位的安装包只有VS 2012（500 MB）一种。这里，笔者以在Windows 7 SP1的硬件环境下安装32位的VS 2010 OpenGL为例。
-	
-	下载完毕后运行安装包，在选择安装位置时注意路径不可以包含空格还有很多Windows中允许却不可使用的字符。依次进行组件选择、协议阅读和开始菜单文件夹的建立后，单击Install即可开始安装。安装时间较长，在17%左右会停滞相当长的时间。带安装完毕后，Qt也就配置好了。
-
-	这里需要指出的是：如果机器上没有安装VS 2010的话，使用VS2010版本的Qt会提示找不到编译器的错误。再次笔者建议怕麻烦的用户使用MinGW版。（最后笔者其实也换成了MinGW版）
+	在Windows环境下搭建Qt环境的方法较为唯一，首先请到Qt官网获得离线安装包文件。对于Windows环境来说，5.0.1版本共有4个安装包，其中32位的安装包有三种，所采用的编译器（库）不一样：MinGW 4.7（650 MB）、VS 2010（485 MB）和VS 2010, OpenGL（476 MB）
+FIXME：待补齐
 
 ### 编译安装Qt5 ####
 #### Ubuntu ####
@@ -70,24 +65,22 @@ FIXME：没实际经验，暂不写。
 
 在main.cpp中输入以下代码：
 
-```cpp
-#include <QApplication>
-#include <QLabel>
+        #include <QApplication>
+        #include <QLabel>
+        
+        int main(int argc, char *argv[])
+        {
+            QApplication a(argc, argv);
 
-int main(int argc, char *argv[])
-{
-    QApplication a(argc, argv);
+            QLabel label("Hello World!");
+            label.show();
     
-    QLabel label("Hello World!");
-    label.show();
-    
-    return a.exec();
-}
-```
+            return a.exec();
+        }
 		
 　　编译，运行。然后一个Hello world程序就完成了，很简单，不是吗？
 
-　　接下来，我们来具体分析一下这个Hello World程序。头两行引用头文件，这个自然不用多说。然后先实例化一个QApplication并将argc和argv参数传入。这里，argc和argv代表的含义是命令行参数的个数和每个参数指向的指针，这点与大多数C++中的main函数声明是一致的。显然，我们大致猜到，QApplication类是用于处理Qt应用程序中最基本的功能的。比如处理外部传入的参数等等，是Qt应用程序中最基本的类。QLabel顾名思义，是一个标签控件，用于显示文字。那么，向构造函数传入的字符串，自然就是该标签的内容了。下一行`label.show()`的意思应该是显示该控件。最后，返回程序运行结果。
+　　接下来，我们来具体分析一下这个Hello World程序。头两行引用头文件，这个自然不用多说。然后先实例化一个QApplication并将argc和argv参数传入。显然，我们大致猜到，QApplication类是用于处理Qt应用程序中最基本的功能的。比如处理外部传入的参数等等，是Qt应用程序中最基本的类。QLabel顾名思义，是一个标签控件，用于显示文字。那么，向构造函数传入的字符串，自然就是该标签的内容了。下一行`label.show()`的意思应该是显示该控件。最后，返回程序运行结果。
 
 　　通过刚刚的目测，我们已经大致猜测了整段程序的含义，接下来，我们来细细地查阅Qt5的文档，来验证一下我们的想法。
 
