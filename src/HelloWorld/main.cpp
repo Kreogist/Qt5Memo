@@ -1,3 +1,8 @@
+/*
+ *This is an example of Qt5Memo.
+ *You can use this code under the GPLv3 license.
+ */
+
 #include <QApplication>
 #include <QLabel>
 
