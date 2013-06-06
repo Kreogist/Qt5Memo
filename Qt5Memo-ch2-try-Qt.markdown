@@ -33,13 +33,14 @@
 	（注意：笔者不使用sudo安装时会发生错误，但使用sudo后Qt Creator的配置文件的读写均需root权限，需手工修改权限为普通用户可读写，否则调Qt Creator设置的时候会报错。大牛们如果有更好的方法，还请赐教）
 	
 #### Windows ####
-	在Windows环境下搭建Qt环境的方法较为唯一，首先请到Qt官网获得离线安装包文件。
-	
-	对于Windows环境来说，5.0.1版本共有4个安装包，其中32位的安装包有三种，所采用的编译器（库）不一样：MinGW 4.7（650 MB）、VS 2010（485 MB）和VS 2010, OpenGL（476 MB）。而64位的安装包只有VS 2012（500 MB）一种。这里，笔者以在Windows 7 SP1的硬件环境下安装32位的VS 2010 OpenGL为例。
-	
-	下载完毕后运行安装包，在选择安装位置时注意路径不可以包含空格还有很多Windows中允许却不可使用的字符。依次进行组件选择、协议阅读和开始菜单文件夹的建立后，单击Install即可开始安装。安装时间较长，在17%左右会停滞相当长的时间。带安装完毕后，Qt也就配置好了。
 
-	这里需要指出的是：如果机器上没有安装VS 2010的话，使用VS2010版本的Qt会提示找不到编译器的错误。再次笔者建议怕麻烦的用户使用MinGW版。（最后笔者其实也换成了MinGW版）
+　　在Windows环境下搭建Qt环境的方法较为唯一，首先请到Qt官网获得离线安装包文件。
+	
+　　对于Windows环境来说，5.0.1版本共有4个安装包，其中32位的安装包有三种，所采用的编译器（库）不一样：MinGW 4.7（650 MB）、VS 2010（485 MB）和VS 2010, OpenGL（476 MB）。而64位的安装包只有VS 2012（500 MB）一种。这里，笔者以在Windows 7 SP1的硬件环境下安装32位的VS 2010 OpenGL为例。
+	
+　　下载完毕后运行安装包，在选择安装位置时注意路径不可以包含空格还有很多Windows中允许却不可使用的字符。依次进行组件选择、协议阅读和开始菜单文件夹的建立后，单击Install即可开始安装。安装时间较长，在17%左右会停滞相当长的时间。带安装完毕后，Qt也就配置好了。
+
+　　这里需要指出的是：如果机器上没有安装VS 2010的话，使用VS2010版本的Qt会提示找不到编译器的错误。再次笔者建议怕麻烦的用户使用MinGW版。（最后笔者其实也换成了MinGW版）
 
 ### 编译安装Qt5 ####
 #### Ubuntu ####
@@ -100,6 +101,7 @@ int main(int argc, char *argv[])
 
 　　一些GUI程序会提供批处理模式（从命令行输入一些参数，然后自动执行任务而不需要人工操作）。在这类非GUI的模式下，初始化一些和图形用户界面相关的资源就显得有些浪费了。为了避免这个问题，Qt提供了QCoreApplication。下面这个例子（源自Qt5Doc）展示了如何动态选择创建QCoreApplication还是QApplication。
 
+```cpp
         QCoreApplication* createApplication(int &argc, char *argv[])
         {
             for (int i = 1; i < argc; ++i)
@@ -120,14 +122,17 @@ int main(int argc, char *argv[])
             
             return app->exec();
         }
+```
 		
 　　这段代码运行时，首先检查是否传入-no-gui。如果传入了，则实例化QCoreApplication类，否则就创建QApplication类。QScopedPointer是Qt提供的智能指针类之一，可以自动进行回收内存等等工作，目前我们先不理它，把它当作普通指针就可以。`qobject_cast`可以将父类指针转化为子类指针，如果强制转型成功则返回子类指针。失败则返回NULL。通过判断其返回值，我们就可以知道我们创建的是否是QApplication类，从而启动对应的处理。这样就实现了动态选择创建QApplication或QCoreApplication的功能。
 
 　　QApplication对象可以通过`instance()`函数访问。这是一个静态程序函数，返回QApplication对象的指针，这个指针和全局的qApp指针是相同的。函数原型及功能如下：
 
+```cpp
         QCoreApplication * QCoreApplication::instance() [static]
 	　　//返回指向程序的QCoreApplication（或QApplication）对象的指针
 		//如果没有QCoreApplication（或QApplication）被创建，则会返回NULL
+```
 
 　　QApplication主要负责这样一些工作：
 
@@ -192,7 +197,8 @@ int main(int argc, char *argv[])
 	那么，作为应用程序，如果想要知道用户输入了什么，只需要不断读取自己的消息队列就可以了。读取，处理，读取，处理，遵循这样的步骤，应用程序就可以和用户不断交互，直到接到要求它关闭的消息。这个不断读取消息，处理事件，然后再读取，再处理的循环就叫事件循环。
 	
 	程序的事件循环的伪代码如下：
-	
+
+```cpp	
         int main()
 		{
 			while(getEvent() && event!=QUIT) //不断获取事件列表中的事件，直到收到用户要求退出的消息。
@@ -217,6 +223,7 @@ int main(int argc, char *argv[])
 				}
 			}
 		}
+```
 	
 	可以说，事件循环是运行在多任务系统上的GUI程序的一个主线。所有的交互和响应基本都是在事件循环中完成的。但直接用面向过程的方式使用事件循环十分不方便，不便于思考程序的逻辑。所以，为了便于开发，多数的图形用户界面框架都对事件循环进行了封装。用各种不同的方法在框架内部分发处理消息。但无论怎样封装，只要把握主事件循环这条主线，很多图形用户界面框架就都很好上手了。例如：MFC的消息映射表、VB中的什么Click啊mouse move什么的等等。毕竟，只要知道怎样处理事件，我们就知道怎样与用户交互了。知道怎样与用户交互，其他的问题其实都好解决。
 	
@@ -247,6 +254,7 @@ int main(int argc, char *argv[])
 ### 深入解读Hello World ###
 　　之前我们只对我们的Hello World做了目测式的简单理解，在详细查过Qt的文档后，我们重新解读一下这段代码。
 
+```cpp
         #include <QApplication>
         #include <QLabel>
         
@@ -266,6 +274,7 @@ int main(int argc, char *argv[])
     
             return a.exec();
         }
+```
 
 　　程序头两行引用了QApplication类和QLabel类的头文件。
 
@@ -283,6 +292,7 @@ int main(int argc, char *argv[])
 　　（ *我们使用Qt 5.0.2版本的源代码。为使逻辑更清晰，无关的代码我们都直接忽略* ）
 　　首先，执行的是`QApplication a(argc, argv);`这是Hello World的起点，也是我们这趟深入Qt之旅的起点。
 
+```cpp
         //qtbase/src/widgets/kernel/qapplication.h
 		class Q_WIDGETS_EXPORT QApplication : public QGuiApplication
 		{
@@ -304,8 +314,10 @@ int main(int argc, char *argv[])
 			d->construct();
 		}
         //...
+```
 
 然后转入QApplication的父类QGuiApplication的构造函数
+```cpp
 
 		//qtbase/src/gui/kernel/qguiapplication.h
 		//...
@@ -327,9 +339,11 @@ int main(int argc, char *argv[])
 			
 			QCoreApplicationPrivate::eventDispatcher->startingUp();
 		}
+```
 
 和QApplication的定义相当相似，我们继续进入到QCoreApplication中一探究竟。
 
+```cpp
         //qtbase/src/corelib/kernel/qcoreaapplication.h
 		//...
 		
@@ -357,9 +371,11 @@ int main(int argc, char *argv[])
 			init();
 			QCoreApplicationPrivate::eventDispatcher->startingUp();
 		}
+```
 	
 终于找到有实际意义的函数`QCoreApplication::init()`了，几经辗转啊！
 
+```cpp
         //qtbase/src/corelib/kernel/qcoreapplication.cpp
 		void QCoreApplication::init()
 		{
@@ -410,10 +426,12 @@ int main(int argc, char *argv[])
 			qt_startup_hook();
 		}
 		//
+```
 
 
 这么复杂的一堆代码我们自然不可能都看完。着重看一下我们一直关注的和事件处理相关的部分吧。我们来看看Qt是怎样创建默认的事件分发器的。透过这里的代码，我们应该可以简单地推测一下Qt是如何跨平台的。
 
+```cpp
         //qtbase/src/corelib/kernel/qcoreapplication.cpp
 		void QCoreApplicationPrivate::createEventDispatcher()
 		{
@@ -442,9 +460,11 @@ int main(int argc, char *argv[])
         #  error "QEventDispatcher not yet ported to this platform"
         #endif
 		}
+```
 		
 在这里为不同的平台选择了不同的事件分发器。看来Qt使用了QAbstractEventDispatcher这个抽象类来抽象不同平台的差异，并为不同平台实现对应的子类。我们来看看QEventDispatcherWin32类。
 
+```cpp
 	    bool QEventDispatcherWin32::processEvents(QEventLoop::ProcessEventsFlags flags)
 		{
 			Q_D(QEventDispatcherWin32);
@@ -596,12 +616,13 @@ int main(int argc, char *argv[])
 			return retVal;
 		}
 		//
-
+```
 
 长长一大片代码，虽然有些杂乱无章，不过还是看到了我们想要看的东西：`PeekMessage()`这是windows平台上读取消息用的一个函数，说明我们已经成功地找到了Qt获取并分发消息的地方。现在，让我们来简单整理一下思路。Qt程序的跨平台方案是这样的：Qt程序在编译时通过`Q_OS_UNIX`、`Q_OS_WIN32`等宏判断目标平台，然后选择创建对应的事件分发器。所有的事件分发器均基于QAbstractEventDispatcher抽象类。这样，不同平台的差异性就被抽象了出来，具体实现由QEventDispatcherWin32等等子类实现，这使得Qt的平台相关的部分与那些与平台无关的部分分离。
   
 那么，最后，我们进入`exec()`函数，也即进入事件循环。具体查找Qt源代码的过程和上面相仿，我们直接给出结果，就不再赘述无关紧要的细节了。
 
+```cpp
         //qtbase/src/corelib/kernel/qcoreapplication.cpp
         int QCoreApplication::exec()
 		{
@@ -640,9 +661,11 @@ int main(int argc, char *argv[])
 			
 			return returnCode;
 		}
+```
 		
 好吧，又调用了QEventLoop的`exec()`函数，真是层层转接啊。没办法，打开eventloop的源文件看：
 
+```cpp
         //qtbase/src/corelib/kernel/qeventloop.cpp
 		int QEventLoop::exec(ProcessEventsFlags flags)
         {
@@ -702,9 +725,11 @@ int main(int argc, char *argv[])
             ref.exceptionCaught = false;
             return d->returnCode;
         }
+```
 
 然后，我们看一看处理消息的函数：
 
+```cpp
         bool QEventLoop::processEvents(ProcessEventsFlags flags)
 		{
             Q_D(QEventLoop);
@@ -712,6 +737,7 @@ int main(int argc, char *argv[])
                 return false;
             return d->threadData->eventDispatcher->processEvents(flags);
         }
+```
 
 这个函数就很简单了，调用我们之前已经创建好的事件分发器的事件处理函数而已。至此，Qt程序运行的基本轮廓就已经被勾勒完全了。
 
